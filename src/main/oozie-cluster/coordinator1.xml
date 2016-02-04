@@ -1,0 +1,38 @@
+<coordinator-app name="coord-job"
+                 frequency="${frequency}"
+                 start="${start_time}"
+                 end="${end_time}"
+                 timezone="${timezone}"
+                 xmlns="uri:oozie:coordinator:0.4">
+
+    <controls>
+        <timeout>${timeout}</timeout>
+        <concurrency>${concurrency}</concurrency>
+        <execution>${execution_order}</execution>
+        <throttle>${materialization_throttle}</throttle>
+    </controls>
+
+    <datasets>
+        <dataset name="output" frequency="${frequency}" initial-instance="${start_time}" timezone="${timezone}">
+            <uri-template>${data_path}/${YEAR}-${MONTH}-${DAY}/input</uri-template>
+        </dataset>
+    </datasets>
+
+    <output-events>
+        <data-out name="dout" dataset="output">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+    </output-events>
+
+    <action>
+        <workflow>
+            <app-path>${wf1}</app-path>
+            <configuration>
+                <property>
+                    <name>input_data</name>
+                    <value>${coord:dataOut('dout')}</value>
+                </property>
+            </configuration>
+        </workflow>
+    </action>
+</coordinator-app>

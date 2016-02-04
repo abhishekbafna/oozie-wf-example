@@ -1,0 +1,10 @@
+<bundle-app name="bundle-app" xmlns="uri:oozie:bundle:0.2">
+
+    <coordinator name="coord-1">
+        <app-path>${coord1}</app-path>
+    </coordinator>
+
+    <coordinator name="coord-2">
+        <app-path>${coord2}</app-path>
+    </coordinator>
+</bundle-app>

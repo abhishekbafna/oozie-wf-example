@@ -1,0 +1,92 @@
+<coordinator-app name="coord-job"
+                 frequency="${frequency}"
+                 start="${start_time}"
+                 end="${end_time}"
+                 timezone="${timezone}"
+                 xmlns="uri:oozie:coordinator:0.4">
+
+    <controls>
+        <timeout>${timeout}</timeout>
+        <concurrency>${concurrency}</concurrency>
+        <execution>${execution_order}</execution>
+        <throttle>${materialization_throttle}</throttle>
+    </controls>
+
+    <datasets>
+        <dataset name="input" frequency="${frequency}"
+                 initial-instance="${start_time}" timezone="${timezone}">
+            <uri-template>${data_path}/${YEAR}-${MONTH}-${DAY}/input</uri-template>
+            <done-flag>data.txt</done-flag>
+        </dataset>
+
+        <dataset name="m_gender" frequency="${frequency}"
+                 initial-instance="${start_time}" timezone="${timezone}">
+            <uri-template>${data_path}/${YEAR}-${MONTH}-${DAY}/m_gender</uri-template>
+        </dataset>
+
+        <dataset name="f_gender" frequency="${frequency}"
+                 initial-instance="${start_time}" timezone="${timezone}">
+            <uri-template>${data_path}/${YEAR}-${MONTH}-${DAY}/f_gender</uri-template>
+        </dataset>
+
+        <dataset name="avg_marks" frequency="${frequency}"
+                 initial-instance="${start_time}" timezone="${timezone}">
+            <uri-template>${data_path}/${YEAR}-${MONTH}-${DAY}/avg_marks</uri-template>
+        </dataset>
+
+        <dataset name="max_record" frequency="${frequency}"
+                 initial-instance="${start_time}" timezone="${timezone}">
+            <uri-template>${data_path}/${YEAR}-${MONTH}-${DAY}/max_record</uri-template>
+        </dataset>
+    </datasets>
+
+    <input-events>
+        <data-in name="data_in" dataset="input">
+            <instance>${coord:current(0)}</instance>
+        </data-in>
+    </input-events>
+
+    <output-events>
+        <data-out name="male_out" dataset="m_gender">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+        <data-out name="female_out" dataset="f_gender">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+        <data-out name="avg_out" dataset="avg_marks">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+        <data-out name="max_out" dataset="max_record">
+            <instance>${coord:current(0)}</instance>
+        </data-out>
+    </output-events>
+
+
+    <action>
+        <workflow>
+            <app-path>${wf2}</app-path>
+            <configuration>
+                <property>
+                    <name>input_data</name>
+                    <value>${coord:dataIn('data_in')}</value>
+                </property>
+                <property>
+                    <name>male_student_dir</name>
+                    <value>${coord:dataOut('male_out')}</value>
+                </property>
+                <property>
+                    <name>female_student_dir</name>
+                    <value>${coord:dataOut('female_out')}</value>
+                </property>
+                <property>
+                    <name>avg_marks_dir</name>
+                    <value>${coord:dataOut('avg_out')}</value>
+                </property>
+                <property>
+                    <name>max_record_dir</name>
+                    <value>${coord:dataOut('max_out')}</value>
+                </property>
+            </configuration>
+        </workflow>
+    </action>
+</coordinator-app>

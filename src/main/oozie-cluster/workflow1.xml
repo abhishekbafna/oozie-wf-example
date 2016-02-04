@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow-app name="oozie-hdp" xmlns="uri:oozie:workflow:0.4">
+
+    <credentials>
+        <credential name='my-hcat-creds' type='hcat'>
+            <property>
+                <name>hcat.metastore.uri</name>
+                <value>thrift://c6402.ambari.apache.org:9083</value>
+            </property>
+            <property>
+                <name>hcat.metastore.principal</name>
+                <value>hive/c6402.ambari.apache.org@EXAMPLE.COM</value>
+            </property>
+        </credential>
+    </credentials>
+
+    <start to="generate"/>
+
+    <action name="generate" cred="my-hcat-creds">
+        <java>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${input_data}"/>
+                <mkdir path="${input_data}"/>
+            </prepare>
+<!--
+            <configuration>
+                <property>
+                    <name>mapred.queue.name</name>
+                    <value>${work_queue}</value>
+                </property>
+            </configuration>
+-->
+            <main-class>example.oozie.wf.java.DataGenerator</main-class>
+            <arg>${num_record}</arg>
+            <arg>${nameNode}</arg>
+            <arg>${input_data}/data.txt</arg>
+            <capture-output/>
+        </java>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+
+    <kill name="fail">
+        <message>workflow-${wf:id()} failed.</message>
+    </kill>
+
+    <end name="end"/>
+
+</workflow-app>

@@ -1,0 +1,10 @@
+LOAD DATA INPATH '${input_dir}' OVERWRITE INTO TABLE student.student;
+
+INSERT OVERWRITE DIRECTORY '${output_dir}'
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS TEXTFILE
+SELECT gender, AVG(sub1),AVG(sub2),AVG(sub3)
+FROM student.student
+GROUP BY gender;
+

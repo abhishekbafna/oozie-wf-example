@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<workflow-app name="oozie-hdp" xmlns="uri:oozie:workflow:0.4">
+
+    <credentials>
+        <credential name='my-hcat-creds' type='hcat'>
+            <property>
+                <name>hcat.metastore.uri</name>
+                <value>thrift://c6402.ambari.apache.org:9083</value>
+            </property>
+            <property>
+                <name>hcat.metastore.principal</name>
+                <value>hive/c6402.ambari.apache.org@EXAMPLE.COM</value>
+            </property>
+        </credential>
+    </credentials>
+
+    <start to="parallel"/>
+
+    <fork name="parallel">
+        <path start="m_gender"/>
+        <path start="f_gender"/>
+    </fork>
+
+    <action name="m_gender" cred="my-hcat-creds">
+        <pig>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${male_student_dir}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${work_queue}</value>
+                </property>
+            </configuration>
+            <script>${pig_script}</script>
+            <param>input_dir=${input_data}</param>
+            <param>gender=MALE</param>
+            <param>output_dir=${male_student_dir}</param>
+        </pig>
+        <ok to="joinActions"/>
+        <error to="fail"/>
+    </action>
+
+    <action name="f_gender" cred="my-hcat-creds">
+        <pig>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${female_student_dir}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${work_queue}</value>
+                </property>
+            </configuration>
+            <script>${pig_script}</script>
+            <param>input_dir=${input_data}</param>
+            <param>gender=FEMALE</param>
+            <param>output_dir=${female_student_dir}</param>
+        </pig>
+        <ok to="joinActions"/>
+        <error to="fail"/>
+    </action>
+
+    <join name="joinActions" to="avg_marks"/>
+
+    <action name="avg_marks" cred="my-hcat-creds">
+        <hive xmlns="uri:oozie:hive-action:0.4">
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${avg_marks_dir}"/>
+            </prepare>
+            <script>${hive_script}</script>
+            <param>input_dir=${input_data}</param>
+            <param>output_dir=${avg_marks_dir}</param>
+        </hive>
+        <ok to="max_record"/>
+        <error to="fail"/>
+    </action>
+
+
+    <action name="max_record" cred="my-hcat-creds">
+        <map-reduce>
+            <job-tracker>${jobTracker}</job-tracker>
+            <name-node>${nameNode}</name-node>
+            <prepare>
+                <delete path="${max_record_dir}"/>
+            </prepare>
+            <configuration>
+                <property>
+                    <name>mapred.mapper.new-api</name>
+                    <value>true</value>
+                </property>
+                <property>
+                    <name>mapred.reducer.new-api</name>
+                    <value>true</value>
+                </property>
+                <property>
+                    <name>mapreduce.map.class</name>
+                    <value>example.oozie.wf.mr.CustomMapper</value>
+                </property>
+                <property>
+                    <name>mapred.output.key.class</name>
+                    <value>org.apache.hadoop.io.Text</value>
+                </property>
+                <property>
+                    <name>mapred.output.value.class</name>
+                    <value>org.apache.hadoop.io.DoubleWritable</value>
+                </property>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${work_queue}</value>
+                </property>
+                <property>
+                    <name>mapred.input.dir</name>
+                    <value>${female_student_dir}</value>
+                </property>
+                <property>
+                    <name>mapred.output.dir</name>
+                    <value>${max_record_dir}</value>
+                </property>
+                <property>
+                    <name>mapred.reduce.tasks</name>
+                    <value>0</value>
+                </property>
+            </configuration>
+        </map-reduce>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+
+    <kill name="fail">
+        <message>workflow-${wf:id()} failed.</message>
+    </kill>
+
+    <end name="end"/>
+
+</workflow-app>
