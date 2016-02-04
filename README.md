@@ -3,7 +3,7 @@
 This setup is done and tested using HDP Ambari 2.3
 https://cwiki.apache.org/confluence/display/AMBARI/Quick+Start+Guide
 
-You will also need some extra libraries to run Pig and Hive actions. Please add them.
+You will also need some extra libraries to run Pig and Hive actions. Please add them. OR You can use the =oozie.use.system.libpath=true= configuration, which will copy the required jar for each action automatically.
 
 -- Ports used (update in the respective properties and workflow, if required.)
 - namenode : 8020
